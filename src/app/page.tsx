@@ -2,7 +2,7 @@
 
 import AsyncQueue from '@/utils/AsyncQueue';
 import generateJoiningCode from '@/utils/generateJoiningCode';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { RtcPairSocket } from 'rtc-pair-socket';
 import styles from './page.module.css';
 import generateProtocol from '@/utils/generateProtocol';
@@ -102,6 +102,7 @@ export default function Home() {
   const [bids, setBids] = useState<number[]>(Array(15).fill(0));
   const [result, setResult] = useState<number[]>();
   const [progress, setProgress] = useState<number>(0);
+  const totalBytesRef = useRef(0);
 
   const handleHost = useCallback(async () => {
     const code = generateJoiningCode();
@@ -219,6 +220,7 @@ export default function Home() {
           return;
         }
         socket.send(msg);
+        totalBytesRef.current += msg.byteLength;
         setProgress(progress => progress + msg.byteLength);
       });
 
@@ -227,6 +229,7 @@ export default function Home() {
           throw new Error('Unexpected message type');
         }
         session.handleMessage(otherParty, msg);
+        totalBytesRef.current += msg.byteLength;
         setProgress(progress => progress + msg.byteLength);
       });
 
@@ -254,7 +257,7 @@ export default function Home() {
   );
 
   const normalizeProgress = useCallback(() => {
-    const TOTAL_BYTES = 248476;
+    const TOTAL_BYTES = 2065828;
     const percentage = Math.floor((progress / TOTAL_BYTES) * 100);
     return percentage > 1 ? percentage : 0;
   }, [progress]);
